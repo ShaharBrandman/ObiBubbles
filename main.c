@@ -6,19 +6,30 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "resize_window.h"
 #include "shaders.h"
 
 #define PROGRAM_NAME "Bubbles"
+
 #define WINDOW_HEIGHT 800
 #define WINDOW_WIDTH 600
 
-float triangleVertices[] = {
-    -0.5f, -0.5f, 0.0f, // left
-    0.5f, -0.5f, 0.0f,  // right
-    0.0f, 0.5f, 0.0f    // top
-};
+#define NUM_SEGMENTS 360
+
+float angle = 2 * M_PI / NUM_SEGMENTS;
+
+float circleVertices[(NUM_SEGMENTS + 1) * 2]; //x, y
+
+void createCircle() {
+    for (int i = 0; i <= NUM_SEGMENTS; ++i) {
+        float x = cos(i * angle);
+        float y = sin(i * angle);
+        circleVertices[i * 2] = x;
+        circleVertices[i * 2 + 1] = y;
+    }
+}
 
 int main() {
     glfwInit();
@@ -47,7 +58,7 @@ int main() {
         return -1;
     }
 
-    glViewport(0, 0, WINDOW_HEIGHT, WINDOW_WIDTH);
+    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
 
@@ -57,15 +68,24 @@ int main() {
         return -1;
     }
 
-    GLuint VBO, VAO;
+    createCircle();
+
+    GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(circleVertices), circleVertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(
+        0,
+        2, 
+        GL_FLOAT,
+        GL_FALSE,
+        2 * sizeof(float),
+        (void*)0
+    );
+
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -74,12 +94,14 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glfwSwapBuffers(window);
 
-        glClearColor(0.4f, 0.3f, 0.3f, 1.0f);
+        //glClearColor(0.4f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         useShaderProgram(&shaderProgram);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, NUM_SEGMENTS + 1);
+        glBindVertexArray(0);
 
         glfwPollEvents();
     }
