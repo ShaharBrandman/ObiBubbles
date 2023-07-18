@@ -1,7 +1,9 @@
 #version 330 core
 
-layout (location = 0) in vec3 firstPos;
+layout (location = 0) in vec2 position;
+
+uniform vec2 translation;
 
 void main() {
-    gl_Position = vec4(firstPos.x, firstPos.y, firstPos.z, 1.0);
+    gl_Position = vec4(position + translation, 0.0, 1.0);
 }
