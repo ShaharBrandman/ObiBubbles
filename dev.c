@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h> //for dev only
 #include <time.h>
 
 #define WINDOW_WIDTH 800
@@ -46,6 +47,9 @@ float projectileColor[3];
 // Flag indicating if the projectile is in motion
 bool isProjectileMoving = false;
 
+//Flag indicating if the projectile stopped its motion
+bool hasProjectileStopped = false;
+
 typedef struct {
     float x;
     float y;
@@ -68,6 +72,7 @@ int bubbleStackIndex = 0;
 
 Bubble bubbleMatrix[MATRIX_ROWS][MATRIX_COLS];
 
+//create a new bubble stack
 void InitializeBubbleStack() {
     bubbleStackIndex = 0;
     srand(time(NULL));
@@ -81,6 +86,16 @@ void InitializeBubbleStack() {
     }
 }
 
+void increaseBubbleStackIndex() {
+    if (bubbleStackIndex >= BUBBLE_STACK_LENGTH) {
+        InitializeBubbleStack();
+    }
+    else {
+        bubbleStackIndex++;
+    }
+}
+
+//create a new bubble matrix
 void initializeBubbleMatrix() {
     for (int i = 0; i < MATRIX_ROWS; ++i) {
         for (int j = 0; j < MATRIX_COLS; ++j) {
@@ -215,14 +230,6 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
         // Set initial projectile position
         projectileX = cannonX;
         projectileY = cannonY;
-
-        //move on to the next bubble
-        if(bubbleStackIndex >= BUBBLE_STACK_LENGTH) {
-            InitializeBubbleStack();
-        }
-        else {
-            bubbleStackIndex++;
-        }
     }
 }
 
@@ -252,6 +259,44 @@ void checkForCollision() {
     }
 }
 
+void checkForOutOfBounds() {
+    // Check if the projectile is off-screen
+
+    //Left side
+    if (projectileX - PROJECTILE_RADIUS < 0) {
+        projectileX = PROJECTILE_RADIUS;
+        projectileVelocityX *= -1;
+    }
+    
+    //Right Side
+    if (projectileX + PROJECTILE_RADIUS > WINDOW_WIDTH) {
+        projectileX = WINDOW_WIDTH - PROJECTILE_RADIUS;
+        projectileVelocityX *= -1;
+    }
+
+    //below the screen
+    if (projectileY - PROJECTILE_RADIUS < 0) {
+        projectileY = PROJECTILE_RADIUS;
+        //projectileVelocityY *= -1;
+        projectileX = -100.0f;
+        projectileY = -100.0f;
+
+        isProjectileMoving = false;
+        increaseBubbleStackIndex();
+    }
+
+    //above the screen
+    if (projectileY + PROJECTILE_RADIUS > WINDOW_HEIGHT) {
+        projectileY = WINDOW_HEIGHT - PROJECTILE_RADIUS;
+        //projectileVelocityY *= -1;
+        projectileX = -100.0f;
+        projectileY = -100.0f;
+
+        isProjectileMoving = false;
+        increaseBubbleStackIndex();
+    }
+}
+
 void render() {
     // Draw the cannon
     drawCannon();
@@ -269,44 +314,17 @@ void render() {
         projectileX += projectileVelocityX * deltaTime;
         projectileY += projectileVelocityY * deltaTime;
 
-        // Check if the projectile is off-screen
-        //Left side
-        if (projectileX - PROJECTILE_RADIUS < 0) {
-            projectileX = PROJECTILE_RADIUS;
-            projectileVelocityX *= -1;
-        }
-        //Right Side
-        if (projectileX + PROJECTILE_RADIUS > WINDOW_WIDTH) {
-            projectileX = WINDOW_WIDTH - PROJECTILE_RADIUS;
-            projectileVelocityX *= -1;
-        }
-
-        //below the screen
-        if (projectileY - PROJECTILE_RADIUS < 0) {
-            projectileY = PROJECTILE_RADIUS;
-            //projectileVelocityY *= -1;
-            isProjectileMoving = false;
-            projectileX = -100.0f;
-            projectileY = -100.0f;
-        }
-
-        //above the screen
-        if (projectileY + PROJECTILE_RADIUS > WINDOW_HEIGHT) {
-            projectileY = WINDOW_HEIGHT - PROJECTILE_RADIUS;
-            //projectileVelocityY *= -1;
-            isProjectileMoving = false;
-            projectileX = -100.0f;
-            projectileY = -100.0f;
-        }
+        //collision for out of screen
+        checkForOutOfBounds();
 
         //collision for other bubbles
         checkForCollision();
 
         glfwSetTime(0.0); // Reset the elapsed time
-    }
 
-    // Draw the projectile
-    drawProjectile();
+        // Draw the projectile
+        drawProjectile();
+    }
 }
 
 int main() {

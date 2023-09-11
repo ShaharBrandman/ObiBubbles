@@ -11,8 +11,9 @@ $(TARGET): main.c
 	$(CC) $(CFLAGS) -o $(TARGET) main.c $(LIBS)
 
 all: $(TARGET_DEV)
-$(TARGET_DEV): main.c 
-	$(CC) $(CFLAGS) -o $(TARGET_DEV) main.c $(LIBS)
+$(TARGET_DEV): dev.c 
+	$(CC) $(CFLAGS) -o $(TARGET_DEV) dev.c $(LIBS)
 
 clean:
 	rm -f $(TARGET)
+	rm -f $(TARGET_DEV)
